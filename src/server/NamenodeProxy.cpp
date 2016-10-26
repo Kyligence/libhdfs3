@@ -246,9 +246,17 @@ void NamenodeProxy::getBlockLocations(const std::string & src, int64_t offset,
     NAMENODE_HA_RETRY_END();
 }
 
+EncryptionKey NamenodeProxy::getEncryptionKeys() {
+    EncryptionKey key;
+    NAMENODE_HA_RETRY_BEGIN();
+    return namenode->getEncryptionKeys();
+    NAMENODE_HA_RETRY_END();
+    return key;
+}
+
 FileStatus NamenodeProxy::create(const std::string & src, const Permission & masked,
-                                 const std::string & clientName, int flag, bool createParent,
-                                 short replication, int64_t blockSize) {
+                           const std::string & clientName, int flag, bool createParent,
+                           short replication, int64_t blockSize) {
     NAMENODE_HA_RETRY_BEGIN();
     return namenode->create(src, masked, clientName, flag, createParent, replication, blockSize);
     NAMENODE_HA_RETRY_END();
@@ -350,9 +358,11 @@ void NamenodeProxy::concat(const std::string & trg,
 
 bool NamenodeProxy::truncate(const std::string & src, int64_t size,
                              const std::string & clientName) {
+    bool ret = false;
     NAMENODE_HA_RETRY_BEGIN();
     return namenode->truncate(src, size, clientName);
     NAMENODE_HA_RETRY_END();
+    return ret;
 }
 
 void NamenodeProxy::getLease(const std::string & src,
