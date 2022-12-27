@@ -32,7 +32,7 @@
 namespace Hdfs {
 namespace Internal {
 
-LruMap<std::string, PeerCache::value_type> PeerCache::Map;
+//LruMap<std::string, PeerCache::value_type> PeerCache::Map;
 
 PeerCache::PeerCache(const SessionConfig& conf)
     : cacheSize(conf.getSocketCacheCapacity()),

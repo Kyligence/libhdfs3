@@ -57,7 +57,8 @@ class PeerCache {
  private:
   const int cacheSize;
   int64_t expireTimeInterval;  // milliseconds
-  static LruMap<std::string, value_type> Map;
+  //static LruMap<std::string, value_type> Map;
+  LruMap<std::string, value_type> Map;
 };
 }
 }
