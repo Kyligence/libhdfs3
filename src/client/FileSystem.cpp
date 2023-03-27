@@ -248,6 +248,7 @@ void FileSystem::connect(const char * uri, const char * username, const char * t
     try {
         SessionConfig sconf(conf);
         auth = RpcAuth::ParseMethod(sconf.getRpcAuthMethod());
+	username = getenv("hadoop_security_authentication_tbds_username")!=NULL?getenv("hadoop_security_authentication_tbds_username"):username;
 
         if (token && auth != AuthMethod::SIMPLE) {
             Token t;

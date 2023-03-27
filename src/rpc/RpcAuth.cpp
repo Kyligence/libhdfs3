@@ -40,6 +40,8 @@ AuthMethod RpcAuth::ParseMethod(const std::string & str) {
         return AuthMethod::KERBEROS;
     } else if (0 == strcasecmp(str.c_str(), "TOKEN")) {
         return AuthMethod::TOKEN;
+    } else if (0 == strcasecmp(str.c_str(), "TBDS_PLAIN")) {
+        return AuthMethod::TBDS_PLAIN;
     } else {
         THROW(InvalidParameter, "RpcAuth: Unknown auth mechanism type: %s",
               str.c_str());

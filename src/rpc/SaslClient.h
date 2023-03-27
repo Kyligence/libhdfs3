@@ -29,7 +29,7 @@
 #define _HDFS_LIBHDFS3_RPC_SASLCLIENT_H_
 
 #include <gsasl.h>
-
+#include <gl/hmac.h>
 #include "client/Token.h"
 #include "network/Socket.h"
 #include "RpcAuth.h"
@@ -110,6 +110,9 @@ private:
     const std::string thePrincipal;
     bool encryptedData;
 };
+
+extern "C" int hmac_sha1 (const void *key, size_t keylen,
+                   const void *in, size_t inlen, void *resbuf);
 
 }
 }

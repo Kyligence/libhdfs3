@@ -163,8 +163,8 @@ SessionConfig::SessionConfig(const Config & conf) {
     };
     ConfigDefault<std::string> strValues [] = {
         {&defaultUri, "dfs.default.uri", "hdfs://localhost:9000" },
-        {&rpcAuthMethod, "hadoop.security.authentication", "simple" },
-        {&kerberosCachePath, "hadoop.security.kerberos.ticket.cache.path", "" },
+        {&rpcAuthMethod, "hadoop.security.authentication", getenv("hadoop_security_authentication")!=NULL?getenv("hadoop_security_authentication"):"simple" },
+	{&kerberosCachePath, "hadoop.security.kerberos.ticket.cache.path", "" },
         {&logSeverity, "dfs.client.log.severity", "INFO" },
         {&domainSocketPath, "dfs.domain.socket.path", ""},
         {&rpcProtectionStr, "hadoop.rpc.protection", ""},

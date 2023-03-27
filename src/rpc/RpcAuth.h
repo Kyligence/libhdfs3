@@ -39,6 +39,7 @@ namespace Internal {
 enum AuthMethod {
     SIMPLE = 80, KERBEROS = 81, //"GSSAPI"
     TOKEN = 82, //"DIGEST-MD5"
+    TBDS_PLAIN = 84,
     UNKNOWN = 255
 };
 

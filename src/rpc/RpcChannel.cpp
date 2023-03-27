@@ -208,7 +208,9 @@ const RpcSaslProto_SaslAuth * RpcChannelImpl::createSaslClient(
             break;
         } else if (method.getMethod() == AuthMethod::SIMPLE) {
             return auth;
-        } else if (method.getMethod() == AuthMethod::UNKNOWN) {
+        } else if (method.getMethod() == AuthMethod::TBDS_PLAIN) {
+            break;
+        }  else if (method.getMethod() == AuthMethod::UNKNOWN) {
             return auth;
         } else {
             auth = NULL;
@@ -317,6 +319,9 @@ RpcAuth RpcChannelImpl::setupSaslConnection() {
         case RpcSaslProto_SaslState_SUCCESS:
             if (!saslClient) {
                 retval = RpcAuth(AuthMethod::SIMPLE);
+            } else if ( retval.getMethod() == AuthMethod::TBDS_PLAIN ){
+                LOG(DEBUG1,
+                    "sasl tbds_plain authentication completed in client side!");
             } else {
                 payload = saslEvaluateToken(response, true);
             }

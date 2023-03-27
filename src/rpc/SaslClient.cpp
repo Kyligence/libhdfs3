@@ -220,6 +220,10 @@ SaslClient::SaslClient(const RpcSaslProto_SaslAuth & auth, const Token & token,
         initDigestMd5(auth, token);
         break;
 
+    case AuthMethod::TBDS_PLAIN:
+        initTBDS(auth, token);
+        break;
+
     default:
         THROW(HdfsIOException, "unknown auth method.");
         break;
@@ -337,6 +341,96 @@ void SaslClient::initDigestMd5(const RpcSaslProto_SaslAuth & auth,
     gsasl_property_set(session, GSASL_SERVICE, auth.protocol().c_str());
     changeLength = true;
 }
+
+
+
+std::string urlEncode(std::string str){
+    std::string new_str ="";
+    char c;
+    int ic;
+    const char* chars = str.c_str();
+    char bufHex[10];
+    int len = strlen(chars);
+
+    for(int i=0;i<len;i++){
+        c = chars[i];
+        ic = c;
+        // uncomment this if you want to encode spaces with +
+        /*if (c==' ') new_str += '+';
+        else */if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') new_str += c;
+        else {
+        sprintf(bufHex,"%X",c);
+        if(ic < 16)
+            new_str +="%0";
+        else
+            new_str +="%";
+        new_str += bufHex;
+        }
+    }
+    return new_str;
+}
+
+
+std::string ltos(long l)
+{
+    std::ostringstream os;
+    os << l;
+    std::string result;
+    std::istringstream is(os.str());
+    is >> result;
+    return result;
+}
+
+
+
+void SaslClient::initTBDS(const RpcSaslProto_SaslAuth & auth,
+                               const Token & token) {
+    int rc;
+
+    if ((rc = gsasl_client_start(ctx, "PLAIN", &session)) != GSASL_OK) {
+        THROW(HdfsIOException, "Cannot initialize client (%d): %s", rc, gsasl_strerror(rc));
+    }
+
+    std::string password = "PLACEHOLDER";
+
+    std::string hadoop_security_authentication_tbds_secureid = getenv("hadoop_security_authentication_tbds_secureid")!=NULL?getenv("hadoop_security_authentication_tbds_secureid"):"";
+    std::string hadoop_security_authentication_tbds_securekey = getenv("hadoop_security_authentication_tbds_securekey")!=NULL?getenv("hadoop_security_authentication_tbds_securekey"):"";
+
+    long curTime = time(nullptr) * 1000;
+    int random = e();
+
+    std::stringstream ss;
+    ss.imbue(std::locale::classic());
+    ss << hadoop_security_authentication_tbds_secureid << curTime << random;
+    std::string inStr = ss.str();
+
+    char * resbuf = (char*)malloc(512 * sizeof(char));
+    memset(resbuf, 0, 512);
+    hmac_sha1(hadoop_security_authentication_tbds_securekey.c_str(), hadoop_security_authentication_tbds_securekey.length(),
+              inStr.c_str(), inStr.length(),
+              resbuf);
+
+    std::string identifier = Base64Encode(std::string(resbuf));
+    std::string signature = urlEncode(identifier);
+
+    std::string authId = hadoop_security_authentication_tbds_secureid + " " +
+        ltos(curTime) + " " +
+        ltos(random) + " " + signature;
+
+    gsasl_property_set(session, GSASL_PASSWORD, password.c_str());
+    gsasl_property_set(session, GSASL_AUTHID, authId.c_str());
+
+    if (NULL != resbuf) {
+        free(resbuf);
+        resbuf = NULL;
+    }
+}
+
+
+
+
+
+
 
 int SaslClient::findPreferred(int possible) {
     if (possible & GSASL_QOP_AUTH)
