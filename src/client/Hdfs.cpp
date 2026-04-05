@@ -486,11 +486,14 @@ hdfsFS hdfsBuilderConnect(struct hdfsBuilder * bld) {
         fs = new FileSystem(*bld->conf);
 
         if (!bld->token.empty()) {
+            LOG(Hdfs::Internal::WARNING, "hdfsBuilderConnect with token: %s", bld->token.c_str());
             fs->connect(uri.c_str(), NULL, bld->token.c_str());
         }
         else if (!bld->principal.empty()) {
+            LOG(Hdfs::Internal::WARNING, "hdfsBuilderConnect with principal: %s", bld->principal.c_str());
             fs->connect(uri.c_str(), bld->principal.c_str(), NULL);
         } else {
+            LOG(Hdfs::Internal::WARNING, "hdfsBuilderConnect with none");
             fs->connect(uri.c_str());
         }
 

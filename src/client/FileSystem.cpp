@@ -77,25 +77,34 @@ static std::string ExtractPrincipalFromTicketCache(
     SetKRB5CCNAME(cachePath);
 
     do {
-        if (0 != (ec = krb5_init_context(&cxt))) {
+        ec = krb5_init_context(&cxt);
+        LOG(Hdfs::Internal::WARNING, "krb5_init: %d", ec);
+        if (0 != ec) {
             break;
         }
 
-        if (0 != (ec = krb5_cc_default(cxt, &ccache))) {
+        ec = krb5_cc_default(cxt, &ccache);
+        LOG(Hdfs::Internal::WARNING, "krb5_cc: %d", ec);
+        if (0 != ec) {
             break;
         }
 
-        if (0 != (ec = krb5_cc_get_principal(cxt, ccache, &principal))) {
+        ec = krb5_cc_get_principal(cxt, ccache, &principal);
+        LOG(Hdfs::Internal::WARNING, "krb5_cc_get: %d", ec);
+        if (0 != ec) {
             break;
         }
 
-        if (0 != (ec = krb5_unparse_name(cxt, principal, &priName))) {
+        ec = krb5_unparse_name(cxt, principal, &priName);
+        LOG(Hdfs::Internal::WARNING, "krb5_unparse: %d", ec);
+        if (0 != ec) {
             break;
         }
     } while (0);
 
     if (!ec) {
         retval = priName;
+        LOG(Hdfs::Internal::WARNING, "pri name is: %s", retval.c_str());
     } else {
         if (cxt) {
             errmsg = krb5_get_error_message(cxt, ec);
