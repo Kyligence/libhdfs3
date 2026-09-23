@@ -617,9 +617,15 @@ void RpcChannelImpl::sendRequest(RpcRemoteCallPtr remote) {
     if (saslClient) {
         SaslOutputWrapper wrapper(saslClient.get(), &client);
         data = wrapper.wrap(&buffer);
-    }
-    sock->writeFully(data->getBuffer(0), data->getDataSize(0),
+        sock->writeFully(data->getBuffer(0), data->getDataSize(0),
                      key.getConf().getWriteTimeout());
+    }
+    else
+    {
+        sock->writeFully(buffer.getBuffer(0), buffer.getDataSize(0),
+                     key.getConf().getWriteTimeout());
+    }
+
     uint32_t id = remote->getIdentity();
     pendingCalls[id] = remote;
     lastActivity = lastIdle = steady_clock::now();
@@ -796,10 +802,15 @@ void RpcChannelImpl::sendConnectionContent(const RpcAuth & auth) {
     if (saslClient) {
         SaslOutputWrapper wrapper(saslClient.get(), &client);
         data = wrapper.wrap(&buffer);
+        sock->writeFully(data->getBuffer(0), data->getDataSize(0),
+                     key.getConf().getWriteTimeout());
+    }
+    else
+    {
+        sock->writeFully(buffer.getBuffer(0), buffer.getDataSize(0),
+                     key.getConf().getWriteTimeout());
     }
 
-    sock->writeFully(data->getBuffer(0), data->getDataSize(0),
-                     key.getConf().getWriteTimeout());
     lastActivity = lastIdle = steady_clock::now();
 }
 
