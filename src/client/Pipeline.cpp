@@ -192,7 +192,7 @@ bool PipelineImpl::addDatanodeToPipeline(const std::vector<DatanodeInfo> & exclu
                 errorIndex = -1;
                 return true;
             } catch (HdfsIOException &ex) {
-                if (!config.getEncryptedDatanode() && config.getSecureDatanode()) {
+                if (!config.getEncryptedDatanode() && config.getSecureDatanode() && config.getAutoFallbackNonSasl()) {
                     config.setSecureDatanode(false);
                     filesystem->getConf().setSecureDatanode(false);
                     LOG(INFO, "Tried to use SASL connection but failed, falling back to non SASL");
@@ -678,7 +678,7 @@ void PipelineImpl::createBlockOutputStream(const Token & token, int64_t gs, bool
 
         return;
     } catch (HdfsIOException &ex) {
-        if (!config.getEncryptedDatanode() && config.getSecureDatanode()) {
+        if (!config.getEncryptedDatanode() && config.getSecureDatanode() && config.getAutoFallbackNonSasl()) {
             config.setSecureDatanode(false);
             filesystem->getConf().setSecureDatanode(false);
             LOG(INFO, "Tried to use SASL connection but failed, falling back to non SASL");

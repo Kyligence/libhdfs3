@@ -116,6 +116,14 @@ public:
         secureDatanode = val;
     }
 
+    bool getAutoFallbackNonSasl() const {
+        return autoFallbackNonSasl;
+    }
+
+    void setAutoFallbackNonSasl(bool val) {
+        autoFallbackNonSasl = val;
+    }
+
     int32_t getCryptoBufferSize() const {
         return cryptoBufferSize;
     }
@@ -375,6 +383,7 @@ public:
     int64_t defaultBlockSize;
     bool encryptedDatanode;
     bool secureDatanode;
+    bool autoFallbackNonSasl;
     int32_t cryptoBufferSize;
 
     /*

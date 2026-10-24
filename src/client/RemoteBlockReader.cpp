@@ -77,7 +77,7 @@ RemoteBlockReader::RemoteBlockReader(shared_ptr<FileSystemInter> filesystem,
     try {
         sender->readBlock(eb, token, clientName, start, len);
     } catch (HdfsIOException &ex) {
-        if (!conf.getEncryptedDatanode() && conf.getSecureDatanode()) {
+        if (!conf.getEncryptedDatanode() && conf.getSecureDatanode() && conf.getAutoFallbackNonSasl()) {
             conf.setSecureDatanode(false);
             filesystem->getConf().setSecureDatanode(false);
             LOG(INFO, "Tried to use SASL connection but failed, falling back to non SASL");

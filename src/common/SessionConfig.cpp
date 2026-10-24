@@ -91,6 +91,8 @@ SessionConfig::SessionConfig(const Config & conf) {
             &encryptedDatanode, "dfs.encrypt.data.transfer", false
         },{
             &secureDatanode, "dfs.block.access.token.enable", false
+        },{
+            &autoFallbackNonSasl, "dfs.block.auto.fallback.non.sasl", false
         }
     };
     ConfigDefault<int32_t> i32Values[] = {
