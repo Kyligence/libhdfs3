@@ -223,6 +223,32 @@ SessionConfig::SessionConfig(const Config & conf) {
     } else {
         dataProtection = 0;
     }
+
+    // dfs.block.access.token.enable is NOT a data transfer SASL switch: it only
+    // controls block token issuance/validation. Mirror Hadoop and only enable
+    // SASL for encryption or an explicit data transfer protection QOP.
+    dataTransferSasl = encryptedDatanode || dataProtection != 0;
+}
+
+bool SessionConfig::needDataTransferSasl(uint32_t xferPort) const {
+    if (!dataTransferSasl) {
+        return false;
+    }
+
+    // dfs.encrypt.data.transfer always performs the encrypted SASL handshake,
+    // also on privileged ports.
+    if (encryptedDatanode) {
+        return true;
+    }
+
+    // The general (DIGEST-MD5 + block token) handshake is only used on a
+    // secured cluster and when the DataNode transfer port is unprivileged.
+    // Hadoop: SaslDataTransferClient#send / SaslDataTransferServer#receive.
+    if (0 != strcasecmp(rpcAuthMethod.c_str(), "kerberos")) {
+        return false;
+    }
+
+    return xferPort >= 1024;
 }
 
 }

@@ -115,11 +115,11 @@ static inline void BuildNodesInfo(const std::vector<DatanodeInfo> & nodes,
 }
 
 DataTransferProtocolSender::DataTransferProtocolSender(Socket & sock,
-        int writeTimeout, const std::string & datanodeAddr, bool secure, bool token,
+        int writeTimeout, const std::string & datanodeAddr, bool secure, bool sasl,
         EncryptionKey& key, int32_t cryptoBufferSize, int32_t protection) :
     sock(sock), writeTimeout(writeTimeout), datanode(datanodeAddr), isSecure(secure),
-    isToken(token), saslComplete(false), saslClient(NULL), theKey(key), cryptoBufferSize(cryptoBufferSize),
-     protection(protection){
+    needSasl(sasl), saslComplete(false), saslClient(NULL), theKey(key),
+    cryptoBufferSize(cryptoBufferSize), protection(protection) {
 }
 
 DataTransferProtocolSender::~DataTransferProtocolSender() {
@@ -135,8 +135,8 @@ void DataTransferProtocolSender::readBlock(const ExtendedBlock & blk,
         op.set_len(length);
         op.set_offset(blockOffset);
         BuildClientHeader(blk, blockToken, clientName, op.mutable_header());
-        LOG(INFO, "Read block with isSecure: %d isToken: %d.\n", isSecure, isToken);
-        if (isSecure || isToken)
+        LOG(INFO, "Read block with isSecure: %d needSasl: %d.\n", isSecure, needSasl);
+        if (needSasl)
             setupSasl(blk, blockToken);
         Send(sock, READ_BLOCK, &op, writeTimeout, saslClient);
     } catch (const HdfsCanceled & e) {
@@ -173,8 +173,8 @@ void DataTransferProtocolSender::writeBlock(const ExtendedBlock & blk,
         ck->set_bytesperchecksum(bytesPerChecksum);
         ck->set_type((ChecksumTypeProto) checksumType);
         BuildNodesInfo(targets, op.mutable_targets());
-        LOG(INFO, "Write block with isSecure: %d isToken: %d.\n", isSecure, isToken);
-        if (isSecure || isToken)
+        LOG(INFO, "Write block with isSecure: %d needSasl: %d.\n", isSecure, needSasl);
+        if (needSasl)
             setupSasl(blk, blockToken);
         Send(sock, WRITE_BLOCK, &op, writeTimeout, saslClient);
     } catch (const HdfsCanceled & e) {
@@ -201,8 +201,8 @@ void DataTransferProtocolSender::transferBlock(const ExtendedBlock & blk,
         OpTransferBlockProto op;
         BuildClientHeader(blk, blockToken, clientName, op.mutable_header());
         BuildNodesInfo(targets, op.mutable_targets());
-        LOG(INFO, "Transfer block with isSecure: %d isToken: %d.\n", isSecure, isToken);
-        if (isSecure || isToken)
+        LOG(INFO, "Transfer block with isSecure: %d needSasl: %d.\n", isSecure, needSasl);
+        if (needSasl)
             setupSasl(blk, blockToken);
         Send(sock, TRANSFER_BLOCK, &op, writeTimeout, saslClient);
     } catch (const HdfsCanceled & e) {
@@ -242,8 +242,8 @@ void DataTransferProtocolSender::requestShortCircuitFds(const ExtendedBlock blk,
         OpRequestShortCircuitAccessProto op;
         BuildBaseHeader(blk, blockToken, op.mutable_header());
         op.set_maxversion(maxVersion);
-        LOG(INFO, "Request short circuit with isSecure: %d isToken: %d.\n", isSecure, isToken);
-        if (isSecure || isToken)
+        LOG(INFO, "Request short circuit with isSecure: %d needSasl: %d.\n", isSecure, needSasl);
+        if (needSasl)
             setupSasl(blk, blockToken);
 
         Send(sock, REQUEST_SHORT_CIRCUIT_FDS, &op, writeTimeout, saslClient);

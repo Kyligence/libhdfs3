@@ -61,7 +61,7 @@ class DataTransferProtocolSender: public DataTransferProtocol {
 public:
     DataTransferProtocolSender(Socket & sock, int writeTimeout,
                                const std::string & datanodeAddr,
-                               bool secure, bool token, EncryptionKey& key,
+                               bool secure, bool sasl, EncryptionKey& key,
                                int32_t cryptoBufferSize, int32_t protection);
 
     virtual ~DataTransferProtocolSender();
@@ -150,7 +150,7 @@ private:
     int writeTimeout;
     std::string datanode;
     bool isSecure;
-    bool isToken;
+    bool needSasl;
     bool saslComplete;
     SaslClient *saslClient;
     EncryptionKey theKey;

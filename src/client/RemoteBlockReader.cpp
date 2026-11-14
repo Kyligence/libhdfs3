@@ -77,9 +77,10 @@ RemoteBlockReader::RemoteBlockReader(shared_ptr<FileSystemInter> filesystem,
     try {
         sender->readBlock(eb, token, clientName, start, len);
     } catch (HdfsIOException &ex) {
-        if (!conf.getEncryptedDatanode() && conf.getSecureDatanode() && conf.getAutoFallbackNonSasl()) {
-            conf.setSecureDatanode(false);
-            filesystem->getConf().setSecureDatanode(false);
+        if (!conf.getEncryptedDatanode() && conf.needDataTransferSasl(datanode.getXferPort())
+                && conf.getAutoFallbackNonSasl()) {
+            conf.disableDataTransferSasl();
+            filesystem->getConf().disableDataTransferSasl();
             LOG(INFO, "Tried to use SASL connection but failed, falling back to non SASL");
             cleanupSocket();
             setupReader(conf);
@@ -98,7 +99,8 @@ void RemoteBlockReader::setupReader(SessionConfig& conf)
     in = shared_ptr<BufferedSocketReader>(new BufferedSocketReaderImpl(*sock));
     sender = shared_ptr<DataTransferProtocol>(new DataTransferProtocolSender(
         *sock, writeTimeout, datanode.formatAddress(), conf.getEncryptedDatanode(),
-        conf.getSecureDatanode(), key, conf.getCryptoBufferSize(), conf.getDataProtection()));
+        conf.needDataTransferSasl(datanode.getXferPort()), key,
+        conf.getCryptoBufferSize(), conf.getDataProtection()));
     reader = shared_ptr<DataReader>(new DataReader(sender.get(), in, readTimeout));
 }
 

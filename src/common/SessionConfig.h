@@ -116,6 +116,31 @@ public:
         secureDatanode = val;
     }
 
+    /**
+     * Whether the data transfer protocol towards a DataNode has to be guarded
+     * by SASL.
+     *
+     * Hadoop only enables SASL on the data transfer protocol when data
+     * transfer encryption is requested (dfs.encrypt.data.transfer) or a
+     * protection QOP is configured (dfs.data.transfer.protection) on a secure
+     * cluster. dfs.block.access.token.enable only controls whether the
+     * NameNode issues block access tokens and whether the DataNode validates
+     * them; it does not enable SASL.
+     *
+     * The general (DIGEST-MD5 + block token) handshake is also skipped when
+     * the DataNode advertises a privileged transfer port, because the
+     * privileged port authenticates the server already.
+     *
+     * @param xferPort DataNode transfer port advertised by the NameNode.
+     */
+    bool needDataTransferSasl(uint32_t xferPort) const;
+
+    /// Permanently disable data transfer SASL for this configuration (used by
+    /// the non-SASL fallback after a failed handshake).
+    void disableDataTransferSasl() {
+        dataTransferSasl = false;
+    }
+
     bool getAutoFallbackNonSasl() const {
         return autoFallbackNonSasl;
     }
@@ -381,8 +406,9 @@ public:
     std::string logSeverity;
     int32_t defaultReplica;
     int64_t defaultBlockSize;
-    bool encryptedDatanode;
-    bool secureDatanode;
+    bool encryptedDatanode;   // dfs.encrypt.data.transfer
+    bool secureDatanode;      // dfs.block.access.token.enable (token only, not SASL)
+    bool dataTransferSasl;    // derived: encryption or protection QOP configured
     bool autoFallbackNonSasl;
     int32_t cryptoBufferSize;
 

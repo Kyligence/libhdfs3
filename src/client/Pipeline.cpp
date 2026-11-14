@@ -123,7 +123,8 @@ void PipelineImpl::transfer(const ExtendedBlock & blk, const DatanodeInfo & src,
     so->connect(src.getIpAddr().c_str(), src.getXferPort(), connectTimeout);
     EncryptionKey key = filesystem->getEncryptionKeys();
     DataTransferProtocolSender sender(*so, writeTimeout, src.formatAddress(), config.getEncryptedDatanode(),
-        config.getSecureDatanode(), key, config.getCryptoBufferSize(), config.getDataProtection());
+        config.needDataTransferSasl(src.getXferPort()), key, config.getCryptoBufferSize(),
+        config.getDataProtection());
     sender.transferBlock(blk, token, clientName.c_str(), targets);
     char error_text[2048];
     sprintf(error_text, "from %s for block %s.", nodes[0].formatAddress().c_str(), lastBlock->toString().c_str());
@@ -192,9 +193,10 @@ bool PipelineImpl::addDatanodeToPipeline(const std::vector<DatanodeInfo> & exclu
                 errorIndex = -1;
                 return true;
             } catch (HdfsIOException &ex) {
-                if (!config.getEncryptedDatanode() && config.getSecureDatanode() && config.getAutoFallbackNonSasl()) {
-                    config.setSecureDatanode(false);
-                    filesystem->getConf().setSecureDatanode(false);
+                if (!config.getEncryptedDatanode() && config.needDataTransferSasl(src.getXferPort())
+                        && config.getAutoFallbackNonSasl()) {
+                    config.disableDataTransferSasl();
+                    filesystem->getConf().disableDataTransferSasl();
                     LOG(INFO, "Tried to use SASL connection but failed, falling back to non SASL");
                     transfer(*lastBlock, src, targets, lb->getToken());
                     errorIndex = -1;
@@ -635,7 +637,7 @@ void PipelineImpl::createBlockOutputStream(const Token & token, int64_t gs, bool
         sender = shared_ptr<DataTransferProtocolSender>(new DataTransferProtocolSender(*sock, writeTimeout,
                                           nodes[0].formatAddress(),
                                           config.getEncryptedDatanode(),
-                                          config.getSecureDatanode(),
+                                          config.needDataTransferSasl(nodes[0].getXferPort()),
                                           key, config.getCryptoBufferSize(),
                                           config.getDataProtection()));
         sender->writeBlock(*lastBlock, token, clientName.c_str(), targets,
@@ -678,9 +680,10 @@ void PipelineImpl::createBlockOutputStream(const Token & token, int64_t gs, bool
 
         return;
     } catch (HdfsIOException &ex) {
-        if (!config.getEncryptedDatanode() && config.getSecureDatanode() && config.getAutoFallbackNonSasl()) {
-            config.setSecureDatanode(false);
-            filesystem->getConf().setSecureDatanode(false);
+        if (!config.getEncryptedDatanode() && config.needDataTransferSasl(nodes[0].getXferPort())
+                && config.getAutoFallbackNonSasl()) {
+            config.disableDataTransferSasl();
+            filesystem->getConf().disableDataTransferSasl();
             LOG(INFO, "Tried to use SASL connection but failed, falling back to non SASL");
             createBlockOutputStream(token, gs, recovery);
             return;

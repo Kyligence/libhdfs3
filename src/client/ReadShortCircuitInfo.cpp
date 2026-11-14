@@ -243,8 +243,11 @@ ReadShortCircuitInfoBuilder::createReadShortCircuitInfo(
   std::string addr = buildDomainSocketAddress(key.dnPort);
   DomainSocketImpl sock;
   sock.connect(addr.c_str(), 0, conf.getInputConnTimeout());
+  // The short-circuit path uses the local domain socket, which is already a
+  // trusted channel: Hadoop neither encrypts nor runs SASL on it. The block
+  // token is still sent and validated by the DataNode.
   DataTransferProtocolSender sender(sock, conf.getInputWriteTimeout(), addr, conf.getEncryptedDatanode(),
-    conf.getSecureDatanode(), ekey, conf.getCryptoBufferSize(), conf.getDataProtection());
+    false, ekey, conf.getCryptoBufferSize(), conf.getDataProtection());
   sender.requestShortCircuitFds(block, token, MaxReadShortCircuitVersion);
   shared_ptr<ReadShortCircuitFDHolder> fds =
       receiveReadShortCircuitFDs(sock, block);
